@@ -16,12 +16,21 @@ trait PathBuilder {
   private lazy val wildcards = parts count {_.slug == "*"}
 
   /**
+   * The root path "/"
+   */
+  val ^ = PathParts()
+
+  /**
    * PathParts object containing all the parts built up to the point of the first wildcard.
    */
-  case object ^** extends PathParts(
-    parts takeWhile {
-      _.slug != "*"
-    }: _*)
+  lazy val ^** : List[NormalPathPart] = parts.takeWhile {
+    _.slug != "*"
+  }.toList
+
+  /**
+   * Convert a List of path parts into a PathParts object
+   */
+  implicit def toPathParts(parts: List[NormalPathPart]) = PathParts(parts: _*)
 
   /**
    * Convert some PathParts object into a full url
@@ -87,18 +96,24 @@ trait PathBuilder {
       case Nil => None
       case parts =>
         val init = PathParts(parts.init: _*)
-        val leading = if (^**.parts == init.parts) ^** else init
-        Some(leading, parts.last)
+        Some(init, parts.last)
     }
 
     def unapply(mid: PathParts): Option[(PathParts, String)] = mid.parts match {
       case Seq() => None
       case q: Seq[NormalPathPart] =>
         val init = PathParts(q.init: _*)
-        val leading = if (^**.parts == init.parts) ^** else init
-        Some(leading, q.last.slug)
+        Some(init, q.last.slug)
     }
 
   }
+}
+
+object PathBuilder extends PathBuilder {
+
+  /**
+   * Added to all route url matching with the / operator
+   */
+  protected val parts = Nil
 
 }

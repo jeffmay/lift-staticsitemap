@@ -4,9 +4,9 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSpec
 import net.liftweb.sitemap.Loc.LocParam
 import net.liftweb.common.Full
-import net.liftweb.sitemap.{NormalLocPath, *}
+import net.liftweb.sitemap.NormalLocPath
 import path._
-import path.PathUtils._
+import path.PathBuilder._
 
 // TODO: Test url param escaping
 

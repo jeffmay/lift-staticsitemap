@@ -1,11 +1,11 @@
 package net.liftmodules.staticsitemap
 
-import org.scalatest.{TestFailedException, FunSpec}
+import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 import net.liftweb.common.Full
 import net.liftweb.sitemap.{*, SiteMapException, Menu, SiteMap}
 import net.liftweb.sitemap.Loc.LocParam
-import net.liftmodules.staticsitemap.path.^
+import org.scalatest.exceptions.TestFailedException
 
 class TestRoutesBuilder extends FunSpec with ShouldMatchers with RouteConverterBehaviors {
 

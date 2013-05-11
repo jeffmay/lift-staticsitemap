@@ -2,6 +2,7 @@ package net.liftmodules.staticsitemap
 
 import path._
 import path.PathUtils._
+import path.PathBuilder._
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 
