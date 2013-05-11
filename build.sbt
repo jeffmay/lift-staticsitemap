@@ -16,12 +16,14 @@ crossScalaVersions := Seq("2.10.0", "2.9.2", "2.9.1-1", "2.9.1")
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
+resolvers += "CB Central Mirror" at "http://repo.cloudbees.com/content/groups/public"
+
 resolvers += "Java.net Maven2 Repository" at "http://download.java.net/maven/2/"
 
-libraryDependencies <++= {
-  "org.scalatest" %% "scalatest" % "test" ::
-  Nil
-}
+// match scala version here
+libraryDependencies ++= Seq(
+  "org.scalatest" %% "scalatest" % "1.9.1" % "test"
+)
 
 libraryDependencies <++= liftVersion { v =>
   "net.liftweb" %% "lift-webkit" % v % "compile->default" ::
