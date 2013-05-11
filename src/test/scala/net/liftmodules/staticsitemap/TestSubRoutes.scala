@@ -1,24 +1,25 @@
 package net.liftmodules.staticsitemap
 
 import org.scalatest.matchers.ShouldMatchers
-import net.liftweb.sitemap.{Loc, NormalLocPath}
 import org.scalatest.FunSpec
+import net.liftweb.sitemap.Loc.LocParam
 import net.liftweb.common.Full
-import net.liftweb.sitemap.Loc.If
+import net.liftweb.sitemap.{NormalLocPath, *}
+import path._
+import path.PathUtils._
 
 // TODO: Test url param escaping
-// TODO: Test nested permissions
 
 class TestSubRoutes extends FunSpec
 with ShouldMatchers
-with SubRouteBehaviors
-{
+with RouteConverterBehaviors {
+
   describe("A ParameterlessSubRoute") {
     val ParameterlessSiteMap = new StaticSiteMap {
       val default = new ParameterlessSubRoute("/bogus")
-      val singleString = new ParameterlessSubRoute("bogus" -> "/custom")
-      val singleList = new ParameterlessSubRoute(List("better") -> "/custom")
-      val multiple = new ParameterlessSubRoute(List("multiple", "parts") -> "/custom")
+      val singleString = new ParameterlessSubRoute("custom" -> "/custom")
+      val singleList = new ParameterlessSubRoute(^ / "better" -> "/better")
+      val multiple = new ParameterlessSubRoute(^ / "multiple" / "parts" -> "/multiple/parts")
     }
 
     it should behave like aDefaultUnitSubRoute(ParameterlessSiteMap.default)
@@ -26,111 +27,104 @@ with SubRouteBehaviors
     it should behave like allUnitSubRoutes(ParameterlessSiteMap.singleList)
     it should behave like allUnitSubRoutes(ParameterlessSiteMap.multiple)
 
-    it should behave like aRelativeRouteBuilder((mapping: (List[PathPart], String)) => {
-      val sm = new StaticSiteMap {
-        val subroute = new ParameterlessSubRoute(mapping._1 -> mapping._2)
-      }
-      sm.subroute
-    })
+    it should behave like aRelativeRouteBuilder(
+      (mapping: (List[NormalPathPart], String)) => {
+        val sm = new StaticSiteMap {
+          val subroute = new ParameterlessSubRoute(mapping._1 -> mapping._2)
+        }
+        sm.subroute
+      })
   }
 
   describe("The / factory") {
     val SlashSiteMap = new StaticSiteMap {
-      val part = / ("a")
-      val customPart = / ("a" -> "/b")
-      val list = / (List("a", "b"))
-      val customList = / (List("x", "y") -> "/z")
+      val part = @/("a")
+      val customPart = @/("b" -> "/c")
+      val list = @/(List("a", "b"))
+      val customList = @/(^ / "x" / "y" -> "/z")
     }
 
     it should behave like aDefaultUnitSubRoute(SlashSiteMap.part)
+    it should behave like allUnitSubRoutes(SlashSiteMap.customPart)
     it should behave like aDefaultUnitSubRoute(SlashSiteMap.list)
-    it should behave like allUnitSubRoutes(SlashSiteMap.list)
     it should behave like allUnitSubRoutes(SlashSiteMap.customList)
 
-    it ("should produce a url from a single string with the url as the default template path") {
-      SlashSiteMap.part.url should be ("/a")
-      SlashSiteMap.part.templatePath should be ("/a")
+    it("should produce a url from a single string with the url as the default template path") {
+      SlashSiteMap.part.url should be("/a")
+      SlashSiteMap.part.templatePath should be("/a")
     }
 
-    it ("should accept a mapping from a single string to a custom template") {
-      SlashSiteMap.customPart.url should be ("/a")
-      SlashSiteMap.customPart.templatePath should be ("/b")
+    it("should accept a mapping from a single string to a custom template") {
+      SlashSiteMap.customPart.url should be("/b")
+      SlashSiteMap.customPart.templatePath should be("/c")
     }
 
-    it ("should accept a mapping from a list of string with the url as the default template path") {
-      SlashSiteMap.list.url should be ("/a/b")
-      SlashSiteMap.list.templatePath should be ("/a/b")
+    it("should accept a mapping from a list of string with the url as the default template path") {
+      SlashSiteMap.list.url should be("/a/b")
+      SlashSiteMap.list.templatePath should be("/a/b")
     }
 
-    it ("should accept a mapping from a list of string to a custom template") {
-      SlashSiteMap.customList.url should be ("/x/y")
-      SlashSiteMap.customList.templatePath should be ("/z")
+    it("should accept a mapping from a list of string to a custom template") {
+      SlashSiteMap.customList.url should be("/x/y")
+      SlashSiteMap.customList.templatePath should be("/z")
     }
 
-    it ("should prevent matching on a path containing a slash") {
+    it("should prevent matching on a path containing a slash") {
       evaluating {
         new StaticSiteMap {
-          val invalid = / ("/a/b/c")
+          val invalid = @/("/a/b/c")
         }
-      } should produce [PathPartConstructionException]
+      } should produce[PathPartConstructionException]
     }
 
-    it ("(when given a custom template path) should prevent matching on a path containing a slash") {
+    it("(when given a custom template path) should prevent matching on a path containing a slash") {
       evaluating {
         new StaticSiteMap {
-          val invalid = / ("/a/b/c" -> "/custom")
+          val invalid = @/("/a/b/c" -> "/custom")
         }
-      } should produce [PathPartConstructionException]
+      } should produce[PathPartConstructionException]
     }
 
-    it ("should prevent matching on a list of paths if any contains a slash") {
+    it("should prevent matching on a list of paths if any contains a slash") {
       evaluating {
         new StaticSiteMap {
-          val invalid = / (List("a", "b/c"))
+          val invalid = @/(^ / "a" / "b/c")
         }
-      } should produce [PathPartConstructionException]
+      } should produce[PathPartConstructionException]
     }
 
-    it ("(when given a custom template path) should prevent matching on a list of paths if any contains a slash") {
+    it("(when given a custom template path) should prevent matching on a list of paths if any contains a slash") {
       evaluating {
         new StaticSiteMap {
-          val invalid = / (List("a", "b/c") -> "/custom")
+          val invalid = @/(^ / "a" / "b/c" -> "/custom")
         }
-      } should produce [PathPartConstructionException]
+      } should produce[PathPartConstructionException]
     }
   }
 
   describe("A SubRoute") {
+
     val ParamSiteMap = new StaticSiteMap {
-      val nilPrefix = new StringParamUrl(Nil -> "/root") with StringParamTestable {
-        def url(id: String) = / (id)
+      val nilPrefix = new String_@/(Nil -> "/root") {
+        def url(id: String) = ^** / id
 
-        protected def paramForUrl = {
-          case / (id) => Full(id)
+        def paramForUrl = {
+          case ^** / id => Full(id)
         }
-
-        // only used for testing
-        def param(fullUri: String) = paramForUrl(splitPath(fullUri))
       }
-      val singlePrefix = new StringParamUrl("prefix" -> "/root") with StringParamTestable {
-        def url(id: String) = / (id)
+      val singlePrefix = new String_@/("prefix" -> "/root") {
+        def url(id: String) = ^** / id
 
-        protected def paramForUrl = {
-          case / (id) => Full(id)
+        def paramForUrl = {
+          case ^** / id => Full(id)
         }
-
-        // only used for testing
-        def param(fullUri: String) = paramForUrl(splitPath(fullUri))
       }
-      val doublePrefix = new StringParamUrl(List("first", "second") -> "/root") with StringParamTestable {
-        def url(id: String) = / (id)
+      val doublePrefix = new String_@/(^** / "first" / "second" -> "/root") {
+        def url(id: String) = ^** / id
 
-        protected def paramForUrl = {
-          case / (id) => Full(id)
+        def paramForUrl = {
+          case ^** / param => Full(param)
         }
-
-        // only used for testing
-        def param(fullUri: String) = paramForUrl(splitPath(fullUri))
       }
     }
     ParamSiteMap.toSiteMap
@@ -139,65 +133,100 @@ with SubRouteBehaviors
     it should behave like aStringParamSubRoute(ParamSiteMap.singlePrefix)
     it should behave like aStringParamSubRoute(ParamSiteMap.doublePrefix)
 
-    it ("should also be able to construct a url with a parameter and some constant value") {
+    it("should also be able to construct a url with a parameter and some constant value") {
       val ConstAndParamSiteMap = new StaticSiteMap {
-        val sub = new StringParamUrl {
-          def url(id: String) = / (id, "constant")
+        val sub = new String_@/ {
+          def url(id: String) = ^** / id / "constant"
 
-          protected def paramForUrl = {
-            case / (id, "constant") => Full(id)
+          def paramForUrl = {
+            case ^** / id / "constant" => Full(id)
           }
-
-          // only used for testing
-          def param(fullUri: String) = paramForUrl(splitPath(fullUri))
         }
       }
-      ConstAndParamSiteMap.sub.url("x") should be ("/x/constant")
-      ConstAndParamSiteMap.sub.param("/x/constant") should be (Full("x"))
+      ConstAndParamSiteMap.sub.url("x") should be("/x/constant")
+      ConstAndParamSiteMap.sub.paramForUrl(^ / "x" / "constant") should be(Full("x"))
     }
 
-    it ("should also be able to construct a url with multiple constants") {
+    it("should also be able to construct a url with multiple constants") {
       val ConstAndParamSiteMap = new StaticSiteMap {
-        val sub = new StringParamUrl {
-          def url(y: String) = / ("x", y, "z")
+        val sub = new String_@/ {
+          def url(y: String) = ^** / "x" / y / "z"
 
-          protected def paramForUrl = {
-            case / ("x", y, "z") => Full(y)
+          def paramForUrl = {
+            case ^** / "x" / y / "z" => Full(y)
           }
-
-          // only used for testing
-          def param(fullUri: String) = paramForUrl(splitPath(fullUri))
         }
       }
-      ConstAndParamSiteMap.sub.url("y") should be ("/x/y/z")
-      ConstAndParamSiteMap.sub.param("/x/y/z") should be (Full("y"))
+      ConstAndParamSiteMap.sub.url("y") should be("/x/y/z")
+      ConstAndParamSiteMap.sub.paramForUrl(^ / "x" / "y" / "z") should be(Full("y"))
     }
   }
 
   describe("The :/ factory") {
+    case object ParamA extends LocParam[Any]
+    case object ParamB extends LocParam[Any]
+
     val SimpleRoutes = new StaticSiteMap {
-      val plain = :/ ("/page")
-      val tuple = :/ ("/customPage" -> "/customTemplate")
+      val plain = :/("/page")
+      val tuple = :/("/customPage" -> "/customTemplate")
+      val restricted = :/("/restricted", ParamA)
+      val container = new @/("wrong", ParamA) {
+        val absolute = :/("/absolute", ParamB)
+      }
     }
     it should behave like aDefaultUnitSubRoute(SimpleRoutes.plain)
     it should behave like allUnitSubRoutes(SimpleRoutes.tuple)
 
-    it ("should allow constructing root urls with custom template paths") {
+    it("should allow constructing root urls with custom template paths") {
       val SampleRoutes = new StaticSiteMap {
-        val customPath = :/ ("/page1" -> "/customTemplate")
+        val customPath = :/("/page1" -> "/customTemplate")
       }
-      SampleRoutes.customPath.url should be ("/page1")
-      SampleRoutes.customPath.toRoute should have ('path (List(NormalLocPath("customTemplate"))))
+      SampleRoutes.customPath.url should be("/page1")
+      SampleRoutes.customPath.toRoute should have('path(List(NormalLocPath("customTemplate"))))
     }
 
-    it ("should accept LocParams") {
-      val NoAccess = If(() => false, Loc.strToFailMsg("Fogettaboughtit"))
-      val SampleRoutes = new StaticSiteMap {
-        val restricted = :/ ("/restricted", NoAccess)
-      }
-      SampleRoutes.restricted.params should be (List(NoAccess))
+    it("should accept LocParams") {
+      SimpleRoutes.restricted.locParams should be(List(ParamA))
     }
 
-    it should behave like anAbsoluteUrlRouteBuilder(SimpleRoutes :/ _)
+    it("should prevent constructing root urls without a leading /") {
+      evaluating {
+        new StaticSiteMap {
+          val noSlash = :/("wrong" -> "wrong")
+        }
+      } should produce[PathPartSplitException]
+    }
+
+    it("should prevent constructing template paths without a leading /") {
+      evaluating {
+        new StaticSiteMap {
+          val noSlash = :/("/okay" -> "wrong")
+        }
+      } should produce[PathPartSplitException]
+    }
+
+    it("should prevent constructing root urls with empty path parts (ie. //)") {
+      evaluating {
+        new StaticSiteMap {
+          val noSlash = :/("/not/a/good//url" -> "/okay")
+        }
+      } should produce[PathPartConstructionException]
+    }
+
+    it("should prevent constructing template paths with empty path parts (ie. //)") {
+      evaluating {
+        new StaticSiteMap {
+          val noSlash = :/("/a/fine/url" -> "/not/a/good//template/path")
+        }
+      } should produce[PathPartConstructionException]
+    }
+
+    it("should not contain the parent container's prefix") {
+      SimpleRoutes.container.absolute.url should be("/absolute")
+    }
+
+    it("should not contain the parent container's loc param") {
+      SimpleRoutes.container.absolute.locParams should be(List(ParamB))
+    }
   }
 }
