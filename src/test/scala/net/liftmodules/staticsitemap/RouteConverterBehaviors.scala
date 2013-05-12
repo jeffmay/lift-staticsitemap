@@ -2,7 +2,6 @@ package net.liftmodules.staticsitemap
 
 import path._
 import path.PathUtils._
-import path.PathBuilder._
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 
@@ -17,17 +16,17 @@ trait RouteConverterBehaviors extends ShouldMatchers {
 
   def aStringParamSubRoute(routable: ConvertibleToRoute1[String]) {
     it ("(%s) should have a name that is the combined full path of its name parts".format(routable.name)) {
-      val fullNamePath = mkFullPath(routable.nameParts)
+      val fullNamePath: String = routable.nameParts.asFullPath
       routable.name should be (fullNamePath)
     }
 
     it ("(%s) should be able to add a parameter to a url".format(routable.name)) {
-      val fullPathWithX = mkFullPath(routable.urlPathParts ::: "x" :: Nil)
+      val fullPathWithX: String = mkFullPath(routable.urlPathParts.parts.map{_.slug} :+ "x")
       routable.url("x") should be (fullPathWithX)
     }
 
     it ("(%s) should be able to retrieve a parameter from a url".format(routable.name)) {
-      val fullPathWithX: List[String] = routable.urlPathParts ::: "x" :: Nil
+      val fullPathWithX: List[String] = (routable.urlPathParts.parts.map{_.slug} :+ "x").toList
       routable.paramForUrl(fullPathWithX) should be ("x")
     }
 
@@ -51,11 +50,11 @@ trait RouteConverterBehaviors extends ShouldMatchers {
     it should behave like allUnitSubRoutes(routable)
   }
 
-  def aRelativeRouteBuilder[R <: ConvertibleToRoute[_]](build: ((List[NormalPathPart], String)) => R) {
+  def aRelativeRouteBuilder[R <: ConvertibleToRoute[_]](build: ((PathParts, String)) => R) {
     it ("(when only given a template path) should not accept template paths without a leading /") {
       evaluating {
         new StaticSiteMap {
-          val badUrl = build(Nil -> "wrong")
+          val badUrl = build(^ -> "wrong")
         }
       } should produce [PathPartSplitException]
     }
@@ -78,7 +77,7 @@ trait RouteConverterBehaviors extends ShouldMatchers {
 
     it ("(when given a template path) should accept a valid template path") {
       assert(new StaticSiteMap {
-        val goodTemplatePath = build(Nil -> "/okay")
+        val goodTemplatePath = build(^ -> "/okay")
       } != null, "SiteMap was null")
     }
 

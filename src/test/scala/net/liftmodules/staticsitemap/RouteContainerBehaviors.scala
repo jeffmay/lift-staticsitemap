@@ -1,7 +1,8 @@
 package net.liftmodules.staticsitemap
 
 import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.{TestFailedException, FunSpec}
+import org.scalatest.FunSpec
+import org.scalatest.exceptions.TestFailedException
 
 trait RouteContainerBehaviors {
   this: FunSpec with ShouldMatchers =>
@@ -47,7 +48,7 @@ trait RouteContainerBehaviors {
         it should behave like aChildRouteInSiteMap(sitemap)(child)
       case Some(parent: RoutesContainer[_]) =>
         it should behave like aChildRouteOf(parent)(child)
-      case None =>
+      case _ =>
     }
   }
 

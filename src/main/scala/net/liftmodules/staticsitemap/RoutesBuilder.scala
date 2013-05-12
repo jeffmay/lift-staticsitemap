@@ -5,31 +5,25 @@ import net.liftweb.sitemap.Loc.LocParam
 import path._
 
 abstract class RoutesBuilder(
-  override val prefixNameParts: List[NormalPathPart],
+  override val prefixNameParts: PathParts,
   override val prefixParams: List[LocParam[Any]])
   extends RoutesContainer[Any] {
   container =>
 
   // Implicits for Url to TemplatePath mappings
   /**
-   * Convert a String slug into a List[NormalPathPart] prepending the container's name prefix,
+   * Convert a String slug into a PathParts prepending the container's name prefix,
    * so that you can leave off the {{{^**}}}.
    */
-  implicit def strToListPathParts(part: String): List[NormalPathPart] =
-    prefixNameParts ::: List(NormalPathPart(part))
+  implicit def strToListPathParts(part: String): PathParts =
+    PathParts((prefixNameParts.parts :+ NormalPathPart(part)): _*)
 
   /**
-   * Convert a String slug -> absolute template path mapping into a List[NormalPathPart]
+   * Convert a String slug -> absolute template path mapping into a PathParts
    * prepending the container's name prefix, so that you can leave off the {{{^**}}}.
    */
-  implicit def tupleStrToTupleListPathPartStr(mapping: (String, String)): (List[NormalPathPart], String) =
-    (prefixNameParts ::: List(NormalPathPart(mapping._1)), mapping._2)
-
-  /**
-   * Convert the url PathParts of a PathParts -> absolute template path mapping into a List[NormalPathPart]
-   */
-  implicit def tuplePathPartsStrToTupleListPathPartStr(mapping: (PathParts, String)): (List[NormalPathPart], String) =
-    (mapping._1.parts.toList, mapping._2)
+  implicit def tupleStrToTupleListPathPartStr(mapping: (String, String)): (PathParts, String) =
+    (PathParts((prefixNameParts.parts :+ NormalPathPart(mapping._1)): _*), mapping._2)
 
   /**
    * Perform any post construction initialization.
@@ -61,7 +55,7 @@ abstract class RoutesBuilder(
      * @param params Any loc params you want to append
      * @return a parameterless route to the template with the same filename as the path plus the ".html" suffix
      */
-    def apply(parts: List[PathPart], params: LocParam[Any]*) = {
+    def apply(parts: PathParts, params: LocParam[Any]*) = {
       // val pathParts = prefix ::: parts
       //      new ParameterlessSubRoute(pathParts, pathParts, (container.params ++ params).toList)
       new ParameterlessSubRoute(parts, parts, (container.prefixParams ++ params).toList)
@@ -75,7 +69,7 @@ abstract class RoutesBuilder(
      * @return a parameterless route to the template with the same filename as the path given in the mapping
      *         plus the ".html" suffix
      */
-    def apply(mapping: (List[PathPart], String), params: LocParam[Any]*) = {
+    def apply(mapping: (PathParts, String), params: LocParam[Any]*) = {
       //      val urlPathParts = prefix ::: mapping._1
       //      new ParameterlessSubRoute(urlPathParts, PathPart.splitAbsPath(mapping._2), (container.params ++ params).toList)
       new ParameterlessSubRoute(
@@ -99,7 +93,7 @@ abstract class RoutesBuilder(
    * @param prefixNameParts parts of the path to prefix to the matched url
    * @param prefixParams loc params to prepend to all child routes
    */
-  abstract class @/ private[this](prefixNameParts: List[PathPart], override val prefixParams: List[LocParam[Any]])
+  abstract class @/ private[this](prefixNameParts: PathParts, override val prefixParams: List[LocParam[Any]])
     extends RoutesBuilder(prefixNameParts, prefixParams) {
 
     def this(routes: RoutesBuilder, params: LocParam[Any]*) = {
@@ -108,8 +102,8 @@ abstract class RoutesBuilder(
       routes.routes foreach {addToRoutes(_)}
     }
 
-    //    def this(prefix: List[PathPart], params: LocParam[Any]*) = this(container.prefix ::: prefix, params.toList)
-    def this(prefixNameParts: List[PathPart], params: LocParam[Any]*) = this(prefixNameParts, params.toList)
+    //    def this(prefix: PathParts, params: LocParam[Any]*) = this(container.prefix ::: prefix, params.toList)
+    def this(prefixNameParts: PathParts, params: LocParam[Any]*) = this(prefixNameParts, params.toList)
 
     //    def this(params: LocParam[Any]*) = this(container.prefix, params.toList)
     def this(params: LocParam[Any]*) = this(Nil, params.toList)
@@ -161,15 +155,15 @@ abstract class RoutesBuilder(
    * @param params
    */
   class ParameterlessSubRoute private[staticsitemap](
-    nameParts: List[NormalPathPart],
-    templatePathParts: List[NormalPathPart],
+    nameParts: PathParts,
+    templatePathParts: PathParts,
     params: List[LocParam[Unit]])
     extends ParameterlessRouteConverter(nameParts, templatePathParts, params) {
 
     def this(templatePath: String, params: LocParam[Unit]*) =
       this(PathPart.splitAbsPath(templatePath), PathPart.splitAbsPath(templatePath), params.toList)
 
-    def this(mapping: (List[NormalPathPart], String), params: LocParam[Unit]*) =
+    def this(mapping: (PathParts, String), params: LocParam[Unit]*) =
       this(mapping._1, PathPart.splitAbsPath(mapping._2), params.toList)
 
     override val linkText = Loc.LinkText.strToLinkText(url)
@@ -184,8 +178,8 @@ abstract class RoutesBuilder(
    * @tparam ParamsType The type of parameter or tuple of parameters
    */
   abstract class SubRoute[ParamsType : Manifest] private[staticsitemap](
-    nameParts: List[NormalPathPart],
-    templatePathParts: List[NormalPathPart],
+    nameParts: PathParts,
+    templatePathParts: PathParts,
     params: List[LocParam[ParamsType]])
     extends ParamsRouteConverter[ParamsType](nameParts, templatePathParts, params)
     with PathBuilder {
@@ -195,11 +189,11 @@ abstract class RoutesBuilder(
     def this(templatePath: String, params: Loc.LocParam[ParamsType]*) =
       this(PathPart.splitAbsPath(templatePath), PathPart.splitAbsPath(templatePath), params.toList)
 
-    def this(mapping: (List[NormalPathPart], String), params: Loc.LocParam[ParamsType]*) =
+    def this(mapping: (PathParts, String), params: Loc.LocParam[ParamsType]*) =
       this(mapping._1, PathPart.splitAbsPath(mapping._2), params.toList)
 
     // Override the path matcher to use the name parts
-    override val parts = nameParts
+    override val parts: Seq[NormalPathPart] = nameParts.parts
 
     // Add routes to parent after all construction has completed
     addToRoutes(this.toRoute)
@@ -214,52 +208,52 @@ abstract class RoutesBuilder(
     If you don't want to add this to the sitemap at boot, then you must inherit from ParamsRouteConverter
    */
   protected abstract class String_@/ private[staticsitemap](
-    nameParts: List[PathPart], templatePathParts: List[PathPart], params: Seq[Loc.LocParam[String]]
+    nameParts: PathParts, templatePathParts: PathParts, params: Seq[Loc.LocParam[String]]
     ) extends Param_@/[String](nameParts, templatePathParts, params.toList) {
 
-    def this(mapping: (List[PathPart], String), params: Loc.LocParam[String]*) =
+    def this(mapping: (PathParts, String), params: Loc.LocParam[String]*) =
       this(mapping._1, PathPart.splitAbsPath(mapping._2), params)
 
-    def this(prefix: List[PathPart], params: Loc.LocParam[String]*) =
+    def this(prefix: PathParts, params: Loc.LocParam[String]*) =
       this(prefix, prefix, params)
 
     def this(params: Loc.LocParam[String]*) = this(^** / *, params: _*)
   }
 
   protected abstract class Param_@/[T: Manifest] private[staticsitemap](
-    nameParts: List[PathPart], templatePathParts: List[PathPart], params: Seq[Loc.LocParam[T]]
+    nameParts: PathParts, templatePathParts: PathParts, params: Seq[Loc.LocParam[T]]
     ) extends SubRoute[T](nameParts, templatePathParts, params.toList) with ConvertibleToRoute1[T] {
 
-    def this(mapping: (List[PathPart], String), params: Loc.LocParam[T]*) =
+    def this(mapping: (PathParts, String), params: Loc.LocParam[T]*) =
       this(mapping._1, PathPart.splitAbsPath(mapping._2), params.toList)
 
-    def this(prefix: List[PathPart], params: Loc.LocParam[T]*) =
+    def this(prefix: PathParts, params: Loc.LocParam[T]*) =
       this(prefix, prefix, params)
 
     def this(params: Loc.LocParam[T]*) = this(^** / *, params: _*)
   }
 
   protected abstract class TwoParam_@/[T1: Manifest, T2: Manifest] private[staticsitemap](
-    nameParts: List[PathPart], templatePathParts: List[PathPart], params: Seq[Loc.LocParam[(T1, T2)]]
+    nameParts: PathParts, templatePathParts: PathParts, params: Seq[Loc.LocParam[(T1, T2)]]
     ) extends SubRoute[(T1, T2)](nameParts, templatePathParts, params.toList) with ConvertibleToRoute2[T1, T2] {
 
-    def this(mapping: (List[PathPart], String), params: Loc.LocParam[(T1, T2)]*) =
+    def this(mapping: (PathParts, String), params: Loc.LocParam[(T1, T2)]*) =
       this(mapping._1, PathPart.splitAbsPath(mapping._2), params)
 
-    def this(prefix: List[PathPart], params: Loc.LocParam[(T1, T2)]*) =
-      this(prefix, container.prefixNameParts ++ prefix, params)
+    def this(prefix: PathParts, params: Loc.LocParam[(T1, T2)]*) =
+      this(prefix, PathParts(container.prefixNameParts.parts ++ prefix.parts: _*), params)
 
     def this(params: Loc.LocParam[(T1, T2)]*) = this(^** / * / *, params: _*)
   }
 
   protected abstract class ThreeParam_@/[T1: Manifest, T2: Manifest, T3: Manifest] private[staticsitemap](
-    nameParts: List[PathPart], templatePathParts: List[PathPart], params: Seq[Loc.LocParam[(T1, T2, T3)]]
+    nameParts: PathParts, templatePathParts: PathParts, params: Seq[Loc.LocParam[(T1, T2, T3)]]
     ) extends SubRoute[(T1, T2, T3)](nameParts, templatePathParts, params.toList) with ConvertibleToRoute3[T1, T2, T3] {
 
-    def this(mapping: (List[PathPart], String), params: Loc.LocParam[(T1, T2, T3)]*) =
+    def this(mapping: (PathParts, String), params: Loc.LocParam[(T1, T2, T3)]*) =
       this(mapping._1, PathPart.splitAbsPath(mapping._2), params)
 
-    def this(prefix: List[PathPart], params: Loc.LocParam[(T1, T2, T3)]*) =
+    def this(prefix: PathParts, params: Loc.LocParam[(T1, T2, T3)]*) =
       this(prefix, prefix, params)
 
     def this(params: Loc.LocParam[(T1, T2, T3)]*) = this(^** / * / * / *, params: _*)

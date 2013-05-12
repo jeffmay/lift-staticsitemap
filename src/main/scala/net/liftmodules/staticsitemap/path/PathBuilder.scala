@@ -23,14 +23,19 @@ trait PathBuilder {
   /**
    * PathParts object containing all the parts built up to the point of the first wildcard.
    */
-  lazy val ^** : List[NormalPathPart] = parts.takeWhile {
+  lazy val ^** = PathParts(parts.takeWhile {
     _.slug != "*"
-  }.toList
+  }: _*)
 
   /**
    * Convert a List of path parts into a PathParts object
    */
-  implicit def toPathParts(parts: List[NormalPathPart]) = PathParts(parts: _*)
+  implicit def toPathParts(parts: List[Any]) = PathParts(parts collect {
+    case part: String => NormalPathPart(part)
+    case part: NormalPathPart => part
+    case PathPart(Some(slug)) => NormalPathPart(slug)
+  }: _*)
+
 
   /**
    * Convert some PathParts object into a full url

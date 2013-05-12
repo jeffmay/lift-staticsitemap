@@ -28,7 +28,7 @@ with RouteConverterBehaviors {
     it should behave like allUnitSubRoutes(ParameterlessSiteMap.multiple)
 
     it should behave like aRelativeRouteBuilder(
-      (mapping: (List[NormalPathPart], String)) => {
+      (mapping: (PathParts, String)) => {
         val sm = new StaticSiteMap {
           val subroute = new ParameterlessSubRoute(mapping._1 -> mapping._2)
         }
@@ -105,11 +105,16 @@ with RouteConverterBehaviors {
   describe("A SubRoute") {
 
     val ParamSiteMap = new StaticSiteMap {
-      val nilPrefix = new String_@/(Nil -> "/root") {
+      val nilPrefix = new String_@/(^ -> "/root") {
         def url(id: String) = ^** / id
 
         def paramForUrl = {
           case ^** / id => Full(id)
+          case what => {
+            val thing = what
+            val shouldbe = ^**
+            Full(thing.toString)
+          }
         }
       }
       val singlePrefix = new String_@/("prefix" -> "/root") {

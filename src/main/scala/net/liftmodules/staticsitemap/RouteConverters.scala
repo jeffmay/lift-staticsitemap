@@ -2,10 +2,9 @@ package net.liftmodules.staticsitemap
 
 import net.liftweb.common.{Full, Box}
 import net.liftweb.sitemap.{*, Loc}
-import path.PathPart
+import net.liftmodules.staticsitemap.path.{PathParts, NormalPathPart, PathPart}
 import path.PathUtils._
 import net.liftweb.util.NamedPartialFunction
-import net.liftweb.http.S
 
 trait ConvertibleToRoute[ParamsType] {
 
@@ -18,13 +17,13 @@ trait ConvertibleToRoute[ParamsType] {
 
   // By default use the template path as the URL path parts
   /** A list of path strings to match on */
-  def urlPathParts: List[PathPart] = PathPart.splitAbsPath(templatePath)
+  def urlPathParts: PathParts = PathPart.splitAbsPath(templatePath)
 
   /** The parts to build the name from */
-  def nameParts: List[PathPart] = urlPathParts
+  def nameParts: PathParts = urlPathParts
 
   /** The name for the produced Menu Loc should be unique, but should prevent duplicate URL routes. */
-  def name: String = mkFullPath(nameParts)
+  def name: String = nameParts.asFullPath
 
   def linkText: Loc.LinkText[ParamsType] = name
 
@@ -49,7 +48,7 @@ trait ConvertibleToRoute0 extends ConvertibleToRoute[Unit] {
 
   override def name: String = url
 
-  override def nameParts: List[PathPart] = PathPart.splitAbsPath(url)
+  override def nameParts: PathParts = PathPart.splitAbsPath(url)
 
   def templatePath: String = url
 
@@ -137,23 +136,23 @@ trait ConvertibleToRoute3[T1, T2, T3] extends ConvertibleToRoute[(T1, T2, T3)] {
 }
 
 abstract class ParamsRouteConverter[ParamsType](
-  override val nameParts: List[PathPart],
-  templatePathParts: List[PathPart],
+  override val nameParts: PathParts,
+  templatePathParts: PathParts,
   override val locParams: List[Loc.LocParam[ParamsType]] = Nil
   )(implicit val mf: Manifest[ParamsType])
   extends ConvertibleToRoute[ParamsType] {
 
-  override val urlPathParts: List[PathPart] = nameParts takeWhile { _ != PathPart(*) }
-  override val templatePath: String = mkFullPath(templatePathParts)
+  override val urlPathParts: PathParts = PathParts(nameParts.parts.takeWhile{_ != PathPart(*)}: _*)
+  override val templatePath: String = templatePathParts.asFullPath
 }
 
 abstract class ParameterlessRouteConverter(
-  override val nameParts: List[PathPart],
-  templatePathParts: List[PathPart],
+  override val nameParts: PathParts,
+  templatePathParts: PathParts,
   override val locParams: List[Loc.LocParam[Unit]] = Nil
   ) extends ConvertibleToRoute0 {
 
-  override val urlPathParts: List[PathPart] = nameParts takeWhile { _ != PathPart(*) }
-  override val templatePath: String = mkFullPath(templatePathParts)
-  override val url: String = mkFullPath(urlPathParts)
+  override val urlPathParts: PathParts = PathParts(nameParts.parts.takeWhile{_ != PathPart(*)}: _*)
+  override val templatePath: String = templatePathParts.asFullPath
+  override val url: String = urlPathParts.asFullPath
 }

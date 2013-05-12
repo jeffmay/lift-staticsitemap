@@ -1,6 +1,7 @@
 package net.liftmodules.staticsitemap.path
 
 import net.liftweb.sitemap.{NormalLocPath, LocPath, *}
+import net.liftmodules.staticsitemap.path.PathUtils._
 
 case class PathParts(parts: NormalPathPart*) {
   def / (part: String): PathParts = PathParts((parts :+ NormalPathPart(part)): _*)
@@ -15,6 +16,8 @@ case class PathParts(parts: NormalPathPart*) {
       case NormalLocPath(pathItem) => NormalPathPart(pathItem)
     }
   }): _*)
+
+  def asFullPath: String = mkFullPath(parts map {_.slug})
 }
 object PathParts {
   // Convert to PathParts

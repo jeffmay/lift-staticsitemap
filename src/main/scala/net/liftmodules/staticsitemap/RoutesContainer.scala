@@ -2,7 +2,7 @@ package net.liftmodules.staticsitemap
 
 import net.liftweb.sitemap.ConvertableToMenu
 import net.liftweb.sitemap.Loc.LocParam
-import net.liftmodules.staticsitemap.path.{NormalPathPart, PathBuilder}
+import net.liftmodules.staticsitemap.path.{PathParts, NormalPathPart, PathBuilder}
 
 trait RoutesContainer[LocParamsType] extends PathBuilder {
   // Some implicits for converting routeables and menuables
@@ -14,12 +14,12 @@ trait RoutesContainer[LocParamsType] extends PathBuilder {
   /**
    * Prefix all sub routes with this list of path parts.
    */
-  def prefixNameParts: List[NormalPathPart]
+  def prefixNameParts: PathParts
 
   /**
    * Set the parts matcher to match the name parts by default.
    */
-  override def parts: List[NormalPathPart] = prefixNameParts
+  override def parts: Seq[NormalPathPart] = prefixNameParts.parts
 
   /**
    * Prefix all sub routes with this sequence of loc params.
@@ -49,7 +49,7 @@ trait RoutesContainer[LocParamsType] extends PathBuilder {
   override def toString = "%s(%s)".format(
     getClass.getSimpleName,
     (
-      ("" :: prefixNameParts.map{_.slug}).mkString("^**", " / ", "") ::
+      ("" +: prefixNameParts.parts.map{_.slug}).mkString("^**", " / ", "") ::
         prefixParams.map{_.toString}
     ).mkString(", ")
   )

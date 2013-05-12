@@ -22,6 +22,11 @@ object PathPart {
 
   def apply(slug: LocPath): PathPart = if (slug.wildcard_?) apply("*") else apply(slug.pathItem)
 
+  def unapply(o: Any): Option[Option[String]] = o match {
+    case part: NormalPathPart => Some(part.slugOpt)
+    case _ => None
+  }
+
   /**
    * Attempts to split the given string into a path list
    * @param absolutePath an absolute path to split
