@@ -11,6 +11,29 @@ class TestPathBuilder extends FunSpec with ShouldMatchers {
 
     describe("when extracting path parts") {
 
+      describe("with ^**") {
+
+        it("should match ^ with no parts") {
+          val builder = new PathBuilder with PathExtracting {
+            def parts = Nil
+            def extract = {
+              case ^** => List("correct")
+            }
+          }
+          builder.extract(Nil) should be (List("correct"))
+        }
+
+        it("should match a single path part") {
+          val builder = new PathBuilder with PathExtracting {
+            def parts = Nil
+            def extract = {
+              case ^** / param => List(param)
+            }
+          }
+          builder.extract(List("one")) should be (List("one"))
+        }
+      }
+
       describe("with %") {
 
         it("should behave like ^** when given no arguments") {
@@ -20,7 +43,7 @@ class TestPathBuilder extends FunSpec with ShouldMatchers {
               case extracted @ % () => extracted
             }
           }
-          builder.extract(^ / "one") should be (builder.^** : List[String])
+          builder.extract(^ / "one") should be (builder.^**.toList)
         }
 
         it("should not accept zero parameters when a wildcard is present in the parts") {

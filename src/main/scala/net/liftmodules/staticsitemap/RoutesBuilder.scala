@@ -25,6 +25,9 @@ abstract class RoutesBuilder(
   implicit def tupleStrToTupleListPathPartStr(mapping: (String, String)): (PathParts, String) =
     (PathParts((prefixNameParts.parts :+ NormalPathPart(mapping._1)): _*), mapping._2)
 
+  implicit def tupleListStrToTupleListPathPartStr(mapping: (Seq[String], String)): (PathParts, String) =
+    (PathParts((prefixNameParts.parts ++ mapping._1.map{NormalPathPart(_)}): _*), mapping._2)
+
   /**
    * Perform any post construction initialization.
    */

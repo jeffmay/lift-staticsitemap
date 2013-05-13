@@ -10,6 +10,7 @@ import net.liftweb.http.RewriteRequest
 import net.liftweb.http.ParsePath
 import net.liftweb.common.Full
 import net.liftweb.util.Helpers._
+import net.liftmodules.staticsitemap.path.PathParts
 
 /**
  * Holds the first Partial Loc's name that matched the current request before any rewrites.
@@ -60,7 +61,7 @@ trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLogga
     catch {
       case captured: ResponseShortcutException =>
         true
-      case _ => false
+      case _: Exception => false
     }
   }
 

@@ -1,7 +1,7 @@
 package net.liftmodules.staticsitemap.path
 
-import PathUtils._
 import scala.annotation.tailrec
+import scala.collection.immutable.Queue
 
 trait PathBuilder {
 
@@ -18,19 +18,23 @@ trait PathBuilder {
   /**
    * The root path "/"
    */
-  val ^ = PathParts()
+  val ^ : Seq[String] = Queue.empty
 
   /**
    * PathParts object containing all the parts built up to the point of the first wildcard.
    */
-  lazy val ^** = PathParts(parts.takeWhile {
-    _.slug != "*"
+  lazy val ^** : Seq[String] = Queue({
+    parts takeWhile {
+      _.slug != "*"
+    } map {
+      _.slug
+    }
   }: _*)
 
   /**
    * Convert a List of path parts into a PathParts object
    */
-  implicit def toPathParts(parts: List[Any]) = PathParts(parts collect {
+  implicit def toPathParts(parts: Seq[Any]) = PathParts(parts collect {
     case part: String => NormalPathPart(part)
     case part: NormalPathPart => part
     case PathPart(Some(slug)) => NormalPathPart(slug)
@@ -40,7 +44,7 @@ trait PathBuilder {
   /**
    * Convert some PathParts object into a full url
    */
-  implicit def pathPartsToString(path: PathParts): String = mkFullPath(path.parts.toSeq)
+  implicit def pathPartsToString(path: PathParts): String = path.asFullPath
 
   /**
    * Pattern builder that inserts path parts into any wildcards
@@ -97,18 +101,10 @@ trait PathBuilder {
    */
   object / {
 
-    def unapply(path: List[String]): Option[(PathParts, String)] = path match {
+    def unapply(path: Seq[String]): Option[(Seq[String], String)] = path match {
       case Nil => None
       case parts =>
-        val init = PathParts(parts.init: _*)
-        Some(init, parts.last)
-    }
-
-    def unapply(mid: PathParts): Option[(PathParts, String)] = mid.parts match {
-      case Seq() => None
-      case q: Seq[NormalPathPart] =>
-        val init = PathParts(q.init: _*)
-        Some(init, q.last.slug)
+        Some(parts.toVector.init, parts.last)
     }
 
   }
