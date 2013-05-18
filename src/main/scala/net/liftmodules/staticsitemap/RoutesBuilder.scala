@@ -3,9 +3,10 @@ package net.liftmodules.staticsitemap
 import net.liftweb.sitemap.{*, Loc}
 import net.liftweb.sitemap.Loc.LocParam
 import path._
+import scala.collection.immutable.Queue
 
 abstract class RoutesBuilder(
-  override val prefixNameParts: PathParts,
+  override val prefixNameParts: Seq[String],
   override val prefixParams: List[LocParam[Any]])
   extends RoutesContainer[Any] {
   container =>
@@ -96,19 +97,18 @@ abstract class RoutesBuilder(
    * @param prefixNameParts parts of the path to prefix to the matched url
    * @param prefixParams loc params to prepend to all child routes
    */
-  abstract class @/ private[this](prefixNameParts: PathParts, override val prefixParams: List[LocParam[Any]])
+  abstract class @/ private[this](prefixNameParts: Seq[String], override val prefixParams: List[LocParam[Any]])
     extends RoutesBuilder(prefixNameParts, prefixParams) {
 
     def this(routes: RoutesBuilder, params: LocParam[Any]*) = {
-      //      this(container.prefix ++ routes.prefix, (params ++ routes.params).toList)
       this(routes.prefixNameParts, (params ++ routes.prefixParams).toList)
       routes.routes foreach {addToRoutes(_)}
     }
 
-    //    def this(prefix: PathParts, params: LocParam[Any]*) = this(container.prefix ::: prefix, params.toList)
-    def this(prefixNameParts: PathParts, params: LocParam[Any]*) = this(prefixNameParts, params.toList)
+    def this(prefixNamePart: String, params: LocParam[Any]*) = this(Queue(prefixNamePart), params.toList)
 
-    //    def this(params: LocParam[Any]*) = this(container.prefix, params.toList)
+    def this(prefixNameParts: Seq[String], params: LocParam[Any]*) = this(prefixNameParts, params.toList)
+
     def this(params: LocParam[Any]*) = this(Nil, params.toList)
 
     override val parent = Some(container)

@@ -20,8 +20,22 @@ case class PathParts(parts: NormalPathPart*) {
   def asFullPath: String = mkFullPath(parts map {_.slug})
 }
 object PathParts {
-  // Convert to PathParts
-  implicit def listPathPartToPathParts(parts: List[NormalPathPart]): PathParts = PathParts(parts: _*)
+
+  /**
+   * Attempts to split the given string into a path list
+   * @param absolutePath an absolute path to split
+   * @throws IllegalArgumentException if the given string doesn't start with a / or contains empty path parts
+   * @return The path parts as a list
+   */
+  def fromAbsPath(absolutePath: String): PathParts = {
+    if (absolutePath.charAt(0) != '/')
+      throw new PathPartSplitException("Path is not absolute (does not start with '/'): \"%s\"".format(absolutePath))
+    val parts = absolutePath.split('/')
+    if (parts.isEmpty) PathParts()
+    else PathParts(parts.tail.map {
+      NormalPathPart(_)
+    }: _*)
+  }
 
   // Convert from PathParts
   implicit def pathPartsToListPathPart(path: PathParts): List[NormalPathPart] = path.parts.toList

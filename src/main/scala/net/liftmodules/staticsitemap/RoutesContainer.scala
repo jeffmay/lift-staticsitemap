@@ -14,12 +14,12 @@ trait RoutesContainer[LocParamsType] extends PathBuilder {
   /**
    * Prefix all sub routes with this list of path parts.
    */
-  def prefixNameParts: PathParts
+  def prefixNameParts: Seq[String]
 
   /**
    * Set the parts matcher to match the name parts by default.
    */
-  override def parts: Seq[NormalPathPart] = prefixNameParts.parts
+  override def parts: Seq[NormalPathPart] = prefixNameParts map {NormalPathPart(_)}
 
   /**
    * Prefix all sub routes with this sequence of loc params.

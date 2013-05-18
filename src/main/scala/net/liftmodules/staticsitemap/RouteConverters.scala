@@ -17,7 +17,7 @@ trait ConvertibleToRoute[ParamsType] {
 
   // By default use the template path as the URL path parts
   /** A list of path strings to match on */
-  def urlPathParts: PathParts = PathPart.splitAbsPath(templatePath)
+  def urlPathParts: PathParts = PathParts.fromAbsPath(templatePath)
 
   /** The parts to build the name from */
   def nameParts: PathParts = urlPathParts
@@ -48,7 +48,7 @@ trait ConvertibleToRoute0 extends ConvertibleToRoute[Unit] {
 
   override def name: String = url
 
-  override def nameParts: PathParts = PathPart.splitAbsPath(url)
+  override def nameParts: PathParts = PathParts.fromAbsPath(url)
 
   def templatePath: String = url
 
