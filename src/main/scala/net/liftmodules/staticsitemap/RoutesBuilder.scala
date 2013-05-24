@@ -125,6 +125,17 @@ abstract class RoutesBuilder(
   object :/ {
 
     /**
+     * Create a url with the given path parts.
+     * @param url The full url to match
+     * @param params Any loc params you want to append
+     * @return a parameterless route to the template with the same filename as the path plus the ".html" suffix
+     */
+    def apply(url: PathParts, params: Loc.AnyLocParam*) = {
+      val urlPathParts = PathPart.splitAbsPath(url)
+      new ParameterlessSubRoute(urlPathParts, urlPathParts, params.toList)
+    }
+
+    /**
      * Append a part to the end of the current prefix, separated by a slash.
      * @param url The full url to match
      * @param params Any loc params you want to append

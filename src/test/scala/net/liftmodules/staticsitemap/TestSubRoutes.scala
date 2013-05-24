@@ -36,7 +36,7 @@ with RouteConverterBehaviors {
       })
   }
 
-  describe("The / factory") {
+  describe("Relative Snails") {
     val SlashSiteMap = new StaticSiteMap {
       val part = @/("a")
       val customPart = @/("b" -> "/c")
@@ -167,7 +167,7 @@ with RouteConverterBehaviors {
     }
   }
 
-  describe("The :/ factory") {
+  describe("Fixed Urls") {
     case object ParamA extends LocParam[Any]
     case object ParamB extends LocParam[Any]
 
@@ -192,6 +192,13 @@ with RouteConverterBehaviors {
 
     it("should accept LocParams") {
       SimpleRoutes.restricted.locParams should be(List(ParamA))
+    }
+
+    it("^ should be /index.html") {
+      val sitemap = new StaticSiteMap {
+        val Home = :/(^)
+      }
+      sitemap.Home.templatePath should be ("/index")
     }
 
     it("should prevent constructing root urls without a leading /") {
