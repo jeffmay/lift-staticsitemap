@@ -13,11 +13,11 @@ trait ConvertibleToRoute[ParamsType] {
   protected implicit def mf: Manifest[ParamsType]
 
   /** The absolute path to the template */
-  def templatePath: String
+  def templatePath: PathParts
 
   // By default use the template path as the URL path parts
   /** A list of path strings to match on */
-  def urlPathParts: PathParts = PathParts.fromAbsPath(templatePath)
+  def urlPathParts: PathParts = templatePath
 
   /** The parts to build the name from */
   def nameParts: PathParts = urlPathParts
@@ -46,11 +46,9 @@ trait ConvertibleToRoute0 extends ConvertibleToRoute[Unit] {
   // Implement this as public to open this route for url lookup
   def url: String
 
-  override def name: String = url
-
   override def nameParts: PathParts = PathParts.fromAbsPath(url)
 
-  def templatePath: String = url
+  def templatePath: PathParts = PathParts.fromAbsPath(url)
 
   def paramForUrl = {
     case parts if (parts == urlPathParts) => Full(())
@@ -137,22 +135,20 @@ trait ConvertibleToRoute3[T1, T2, T3] extends ConvertibleToRoute[(T1, T2, T3)] {
 
 abstract class ParamsRouteConverter[ParamsType](
   override val nameParts: PathParts,
-  templatePathParts: PathParts,
+  override val templatePath: PathParts,
   override val locParams: List[Loc.LocParam[ParamsType]] = Nil
   )(implicit val mf: Manifest[ParamsType])
   extends ConvertibleToRoute[ParamsType] {
 
   override val urlPathParts: PathParts = PathParts(nameParts.parts.takeWhile{_ != PathPart(*)}: _*)
-  override val templatePath: String = templatePathParts.asFullPath
 }
 
 abstract class ParameterlessRouteConverter(
   override val nameParts: PathParts,
-  templatePathParts: PathParts,
+  override val templatePath: PathParts,
   override val locParams: List[Loc.LocParam[Unit]] = Nil
   ) extends ConvertibleToRoute0 {
 
   override val urlPathParts: PathParts = PathParts(nameParts.parts.takeWhile{_ != PathPart(*)}: _*)
-  override val templatePath: String = templatePathParts.asFullPath
   override val url: String = urlPathParts.asFullPath
 }

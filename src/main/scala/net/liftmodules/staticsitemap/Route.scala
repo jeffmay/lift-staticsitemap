@@ -3,6 +3,7 @@ package net.liftmodules.staticsitemap
 import net.liftweb.common.{Box, Full}
 import net.liftweb.sitemap._
 import net.liftweb.sitemap.Loc._
+import net.liftmodules.staticsitemap.path.PathParts
 
 /**
  * The base trait of Routes and ParameterlessRoutes
@@ -11,7 +12,7 @@ import net.liftweb.sitemap.Loc._
  */
 trait Route[ParamsType] extends ConvertableToMenu {
 
-  def templatePath: String
+  def templatePath: PathParts
 
   def name: String
 
@@ -27,6 +28,16 @@ trait Route[ParamsType] extends ConvertableToMenu {
 }
 
 object Route {
+
+  /**
+   *
+   * @param path
+   * @return
+   */
+  def locPathFor(path: PathParts): List[LocPath] = (path match {
+    case PathParts() => List("index")
+    case path: PathParts => path.parts.toList map {_.slug}
+  }) map {NormalLocPath(_)}
 
   /**
    * Helper method to find a route, with a parameter, with the given name.
@@ -71,7 +82,7 @@ object Route {
    */
   def apply[ParamsType: Manifest](
     name: String,
-    templatePath: String,
+    templatePath: PathParts,
     linkText: String,
     paramForUrl: PartialFunction[List[String], Box[ParamsType]],
     calcUrl: PartialFunction[Any, List[String]]): ParamsRoute[ParamsType] = {
@@ -92,6 +103,6 @@ object Route {
     url: String,
     templatePath: String,
     linkText: String): ParameterlessRoute = {
-    new ParameterlessRoute(name, url, templatePath, linkText, Nil)
+    new ParameterlessRoute(name, url, PathParts.fromAbsPath(templatePath), linkText, Nil)
   }
 }

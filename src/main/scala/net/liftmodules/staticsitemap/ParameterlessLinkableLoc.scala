@@ -4,6 +4,7 @@ import net.liftweb.sitemap.Loc
 import net.liftweb.sitemap.Loc.LocParam
 import net.liftweb.common.Full
 import path.PathUtils._
+import net.liftmodules.staticsitemap.path.PathParts
 
 /**
  * An internally used class that extends lift's Loc type to provide an additional url attribute.
@@ -14,7 +15,7 @@ import path.PathUtils._
  */
 class ParameterlessLinkableLoc(
   override val name: String,
-  val templatePath: String,
+  val templatePath: PathParts,
   val url: String,
   override val text: Loc.LinkText[Unit],
   override val params: List[LocParam[Unit]])

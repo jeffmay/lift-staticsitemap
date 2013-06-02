@@ -3,6 +3,7 @@ package net.liftmodules.staticsitemap
 import net.liftweb.common.Box
 import net.liftweb.sitemap.Loc
 import net.liftweb.sitemap.Loc.LocParam
+import net.liftmodules.staticsitemap.path.PathParts
 
 /**
  * @param name The name of the Route that this Loc was generated from
@@ -15,7 +16,7 @@ import net.liftweb.sitemap.Loc.LocParam
  */
 class ParamsLinkableLoc[ParamsType](
   val name: String,
-  val templatePath: String,
+  val templatePath: PathParts,
   val parameterForUrl: PartialFunction[List[String], Box[ParamsType]],
   val urlForParameter: PartialFunction[ParamsType, List[String]],
   val text: Loc.LinkText[ParamsType],

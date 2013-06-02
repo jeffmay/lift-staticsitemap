@@ -6,6 +6,7 @@ import net.liftweb.util.NamedPartialFunction
 import net.liftweb.common.Box
 import net.liftweb.sitemap.Menu.Menuable
 import net.liftmodules.staticsitemap.path.PathUtils._
+import net.liftmodules.staticsitemap.path.PathParts
 
 /**
  * A Route without a parameter.
@@ -19,14 +20,14 @@ import net.liftmodules.staticsitemap.path.PathUtils._
 case class ParameterlessRoute(
   override val name: String,
   url: String,
-  templatePath: String,
+  templatePath: PathParts,
   override val linkText: Loc.LinkText[Unit],
   override val params: List[LocParam[Unit]],
   postExtractionHooks: Seq[NamedPartialFunction[Box[Unit], Unit]] = Nil)
   extends Menuable(
     name,
     linkText,
-    splitPath(templatePath).map(NormalLocPath(_)).toList,
+    Route.locPathFor(templatePath),
     false,
     params,
     Nil)

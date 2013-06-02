@@ -60,8 +60,6 @@ abstract class RoutesBuilder(
      * @return a parameterless route to the template with the same filename as the path plus the ".html" suffix
      */
     def apply(parts: PathParts, params: LocParam[Any]*) = {
-      // val pathParts = prefix ::: parts
-      //      new ParameterlessSubRoute(pathParts, pathParts, (container.params ++ params).toList)
       new ParameterlessSubRoute(parts, parts, (container.prefixParams ++ params).toList)
     }
 
@@ -74,8 +72,6 @@ abstract class RoutesBuilder(
      *         plus the ".html" suffix
      */
     def apply(mapping: (PathParts, String), params: LocParam[Any]*) = {
-      //      val urlPathParts = prefix ::: mapping._1
-      //      new ParameterlessSubRoute(urlPathParts, PathPart.splitAbsPath(mapping._2), (container.params ++ params).toList)
       new ParameterlessSubRoute(
         mapping._1,
         PathPart.splitAbsPath(mapping._2),

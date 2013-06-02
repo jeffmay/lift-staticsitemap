@@ -19,7 +19,7 @@ abstract class StaticSiteMap(val parent: Option[RoutesBuilder] = None)
    * @return An option of type T
    */
   def getAs[T](implicit mf: Manifest[T]): Option[T] = try {
-    Some(mf.runtimeClass.cast(this).asInstanceOf[T])
+    Some(mf.erasure.cast(this).asInstanceOf[T])
   }
   catch {
     case _: ClassCastException => None
