@@ -13,11 +13,11 @@ trait ConvertibleToRoute[ParamsType] {
   protected implicit def mf: Manifest[ParamsType]
 
   /** The absolute path to the template */
-  def templatePath: PathParts
+  def templateParts: PathParts
 
   // By default use the template path as the URL path parts
   /** A list of path strings to match on */
-  def urlPathParts: PathParts = templatePath
+  def urlPathParts: PathParts = templateParts
 
   /** The parts to build the name from */
   def nameParts: PathParts = urlPathParts
@@ -48,7 +48,7 @@ trait ConvertibleToRoute0 extends ConvertibleToRoute[Unit] {
 
   override def nameParts: PathParts = PathParts.fromAbsPath(url)
 
-  def templatePath: PathParts = PathParts.fromAbsPath(url)
+  def templateParts: PathParts = PathParts.fromAbsPath(url)
 
   def paramForUrl = {
     case parts if (parts == urlPathParts) => Full(())
@@ -58,7 +58,7 @@ trait ConvertibleToRoute0 extends ConvertibleToRoute[Unit] {
     case _ => urlPathParts
   }
 
-  lazy val toRoute = ParameterlessRoute(name, url, templatePath, linkText, locParams, postExtractionHooks)
+  lazy val toRoute = ParameterlessRoute(name, url, templateParts, linkText, locParams, postExtractionHooks)
 }
 
 trait ConvertibleToRoute1[T1] extends ConvertibleToRoute[T1] {
@@ -77,7 +77,7 @@ trait ConvertibleToRoute1[T1] extends ConvertibleToRoute[T1] {
 
   lazy val toRoute = ParamsRoute[T1](
     name,
-    templatePath,
+    templateParts,
     linkText,
     paramForUrl,
     urlForParam,
@@ -101,7 +101,7 @@ trait ConvertibleToRoute2[T1, T2] extends ConvertibleToRoute[(T1, T2)] {
 
   lazy val toRoute = ParamsRoute[(T1, T2)](
     name,
-    templatePath,
+    templateParts,
     linkText,
     paramForUrl,
     urlForParam,
@@ -125,7 +125,7 @@ trait ConvertibleToRoute3[T1, T2, T3] extends ConvertibleToRoute[(T1, T2, T3)] {
 
   lazy val toRoute = ParamsRoute[(T1, T2, T3)](
     name,
-    templatePath,
+    templateParts,
     linkText,
     paramForUrl,
     urlForParam,
@@ -135,7 +135,7 @@ trait ConvertibleToRoute3[T1, T2, T3] extends ConvertibleToRoute[(T1, T2, T3)] {
 
 abstract class ParamsRouteConverter[ParamsType](
   override val nameParts: PathParts,
-  override val templatePath: PathParts,
+  override val templateParts: PathParts,
   override val locParams: List[Loc.LocParam[ParamsType]] = Nil
   )(implicit val mf: Manifest[ParamsType])
   extends ConvertibleToRoute[ParamsType] {
@@ -145,7 +145,7 @@ abstract class ParamsRouteConverter[ParamsType](
 
 abstract class ParameterlessRouteConverter(
   override val nameParts: PathParts,
-  override val templatePath: PathParts,
+  override val templateParts: PathParts,
   override val locParams: List[Loc.LocParam[Unit]] = Nil
   ) extends ConvertibleToRoute0 {
 

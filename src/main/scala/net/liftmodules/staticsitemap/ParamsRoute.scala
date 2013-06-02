@@ -44,10 +44,7 @@ case class ParamsRoute[ParamsType](
         urlForParam(param)
       else throw new UrlGenerationException(name, param)
     },
-    (templatePath match {
-      case PathParts() => List("index")
-      case path: PathParts => path.parts.toList map {_.slug}
-    }) map {NormalLocPath(_)},
+    Route.locPathFor(templatePath),
     false,
     params,
     Nil

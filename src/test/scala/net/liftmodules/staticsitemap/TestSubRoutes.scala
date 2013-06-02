@@ -51,22 +51,22 @@ with RouteConverterBehaviors {
 
     it("should produce a url from a single string with the url as the default template path") {
       SlashSiteMap.part.url should be("/a")
-      SlashSiteMap.part.templatePath should be(^ / "a")
+      SlashSiteMap.part.templateParts should be(^ / "a")
     }
 
     it("should accept a mapping from a single string to a custom template") {
       SlashSiteMap.customPart.url should be("/b")
-      SlashSiteMap.customPart.templatePath should be(^ / "c")
+      SlashSiteMap.customPart.templateParts should be(^ / "c")
     }
 
     it("should accept a mapping from a list of string with the url as the default template path") {
       SlashSiteMap.list.url should be("/a/b")
-      SlashSiteMap.list.templatePath should be(^ / "a" / "b")
+      SlashSiteMap.list.templateParts should be(^ / "a" / "b")
     }
 
     it("should accept a mapping from a list of string to a custom template") {
       SlashSiteMap.customList.url should be("/x/y")
-      SlashSiteMap.customList.templatePath should be(^ / "z")
+      SlashSiteMap.customList.templateParts should be(^ / "z")
     }
 
     it("should prevent matching on a path containing a slash") {
@@ -198,7 +198,11 @@ with RouteConverterBehaviors {
       val sitemap = new StaticSiteMap {
         val Home = :/(^)
       }
-      sitemap.Home.templatePath should be (^ / "index")
+      // There is a natural
+      sitemap.Home.templateParts.parts should equal (^)
+      sitemap.Home.toRoute.templatePath.parts should equal (^)
+      sitemap.Home.toRoute.toMenu.loc.calcDefaultHref should be ("/")
+
     }
 
     it("should prevent constructing root urls without a leading /") {
