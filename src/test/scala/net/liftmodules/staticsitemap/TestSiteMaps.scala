@@ -1,16 +1,21 @@
 package net.liftmodules.staticsitemap
 
-import org.scalatest.{GivenWhenThen, FunSpec}
-import org.scalatest.matchers.ShouldMatchers
-import net.liftweb.mockweb.MockWeb._
-import net.liftweb.sitemap.SiteMap
-import net.liftweb.common.Full
-import net.liftweb.http.LiftSession
+import net.liftweb.mockweb.WebSpec
+import net.liftweb.http.LiftRules
 
-class TestSiteMaps extends FunSpec
-with ShouldMatchers
-with GivenWhenThen {
+object SampleSiteMap extends StaticSiteMap {
+  val Index = @/(^)
+}
 
+class RootIndexTest extends WebSpec(
+  () => {
+    LiftRules.setSiteMap(SampleSiteMap.toSiteMap)
+  }
+) {
 
-
+  "SiteMap Root Index" should {
+    "Resolve the / url" withReqFor("/") in {
+      _.location.isDefined
+    }
+  }
 }

@@ -32,8 +32,9 @@ resolvers += "Java.net Maven2 Repository" at "http://download.java.net/maven/2/"
 libraryDependencies <++= liftVersion {
   v => Seq(
     "net.liftweb" %% "lift-webkit" % v % "compile->default" withSources(),
-    "net.liftweb" %% "lift-testkit" % v % "compile" withSources()
+    "net.liftweb" %% "lift-testkit" % v % "compile" withSources(),
+    "javax.servlet" % "servlet-api" % "2.5" % "provided" withSources(),
+    "org.specs2" %% "specs2" % "1.13" % "test" withSources(),
+    "org.scalatest" %% "scalatest" % "1.9.1" % "test" withSources()
   )
 }
-
-libraryDependencies += "org.scalatest" %% "scalatest" % "1.9.1" % "test" withSources()
