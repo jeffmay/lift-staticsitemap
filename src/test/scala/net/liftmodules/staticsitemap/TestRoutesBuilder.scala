@@ -117,6 +117,65 @@ class TestRoutesBuilder extends FunSpec with ShouldMatchers with RouteConverterB
       }
     }
 
+    describe("when casting as another type of routes container") {
+
+      trait EmptyRoutes
+
+      trait SampleRoutes extends RoutesBuilder {
+        val ex = @/("ex")
+      }
+
+      trait HasSampleRoutes {
+        def sample: SampleRoutes
+      }
+
+      describe("with the getAs[T] method") {
+
+        it("should return None when the sitemap isn't a subclass of T") {
+          val sitemap = new StaticSiteMap {}
+          sitemap.getAs[EmptyRoutes] should be (None)
+        }
+
+        it("should return Some(T) when the sitemap is a subclass of T") {
+          val sitemap = new StaticSiteMap with EmptyRoutes {}
+          sitemap.getAs[EmptyRoutes] should be (Some(sitemap))
+        }
+      }
+
+      describe("with the getAsOrElse[T] method") {
+
+        it("should return the otherwise when the sitemap isn't a subclass of T") {
+          val sitemap = new StaticSiteMap {}
+          val otherwise = new EmptyRoutes {}
+          sitemap.getAsOrElse[EmptyRoutes](otherwise) should not be (sitemap)
+          sitemap.getAsOrElse[EmptyRoutes](otherwise) should be (otherwise)
+        }
+
+        it("should return Some(T) when the sitemap is a subclass of T") {
+          val sitemap = new StaticSiteMap with EmptyRoutes {}
+          val otherwise = new EmptyRoutes {}
+          sitemap.getAsOrElse[EmptyRoutes](otherwise) should not be (otherwise)
+          sitemap.getAsOrElse[EmptyRoutes](otherwise) should be (sitemap)
+        }
+      }
+
+      describe("with the getAsOrThrow[T] method") {
+
+        it("should throw an exception when the sitemap isn't a subclass of T") {
+          val sitemap = new StaticSiteMap {}
+          evaluating {
+            sitemap.getAsOrThrow[EmptyRoutes]
+          } should produce[MissingRoutesException[sitemap.type, EmptyRoutes]]
+        }
+
+        it("should return itself as a T when the sitemap is a subclass of T") {
+          val sitemap = new StaticSiteMap with EmptyRoutes {}
+          val empty = sitemap.getAsOrElse[EmptyRoutes](new EmptyRoutes {})
+          sitemap.getAsOrThrow[EmptyRoutes] should be (empty)
+        }
+      }
+    }
+
     describe("when nesting routes inside a Routes container") {
       it("should not allow calling url on the Routes container") {
         evaluating {

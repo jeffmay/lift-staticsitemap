@@ -6,6 +6,7 @@ import net.liftweb.sitemap.Loc.LocParam
 import net.liftweb.util.NamedPartialFunction
 import net.liftweb.sitemap.Menu.ParamsMenuable
 import net.liftmodules.staticsitemap.path.PathUtils._
+import net.liftmodules.staticsitemap.path.{PathBuilder, PathParts}
 
 /**
  * A Route parameterized by the type of its parameter. This is a helper that should make
@@ -24,7 +25,7 @@ import net.liftmodules.staticsitemap.path.PathUtils._
  */
 case class ParamsRoute[ParamsType](
   override val name: String,
-  templatePath: String,
+  templatePath: PathParts,
   override val linkText: Loc.LinkText[ParamsType],
   paramForUrl: PartialFunction[List[String], Box[ParamsType]],
   urlForParam: PartialFunction[ParamsType, List[String]],
@@ -43,7 +44,7 @@ case class ParamsRoute[ParamsType](
         urlForParam(param)
       else throw new UrlGenerationException(name, param)
     },
-    splitPath(templatePath).map(NormalLocPath(_)).toList,
+    Route.locPathFor(templatePath),
     false,
     params,
     Nil
