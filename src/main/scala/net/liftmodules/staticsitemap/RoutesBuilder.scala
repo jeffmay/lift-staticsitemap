@@ -16,7 +16,7 @@ abstract class RoutesBuilder(
    * Convert a String slug into a PathParts prepending the container's name prefix,
    * so that you can leave off the {{{^**}}}.
    */
-  implicit def strToListPathParts(part: String): PathParts =
+  implicit def strToPathParts(part: String): PathParts =
     PathParts((prefixNameParts.parts :+ NormalPathPart(part)): _*)
 
   /**
@@ -60,8 +60,6 @@ abstract class RoutesBuilder(
      * @return a parameterless route to the template with the same filename as the path plus the ".html" suffix
      */
     def apply(parts: PathParts, params: LocParam[Any]*) = {
-      // val pathParts = prefix ::: parts
-      //      new ParameterlessSubRoute(pathParts, pathParts, (container.params ++ params).toList)
       new ParameterlessSubRoute(parts, parts, (container.prefixParams ++ params).toList)
     }
 
@@ -74,8 +72,6 @@ abstract class RoutesBuilder(
      *         plus the ".html" suffix
      */
     def apply(mapping: (PathParts, String), params: LocParam[Any]*) = {
-      //      val urlPathParts = prefix ::: mapping._1
-      //      new ParameterlessSubRoute(urlPathParts, PathPart.splitAbsPath(mapping._2), (container.params ++ params).toList)
       new ParameterlessSubRoute(
         mapping._1,
         PathPart.splitAbsPath(mapping._2),
@@ -123,6 +119,17 @@ abstract class RoutesBuilder(
    * TODO: Make this an inheritable class.
    */
   object :/ {
+
+    /**
+     * Create a url with the given path parts.
+     * @param url The full url to match
+     * @param params Any loc params you want to append
+     * @return a parameterless route to the template with the same filename as the path plus the ".html" suffix
+     */
+    def apply(url: PathParts, params: Loc.AnyLocParam*) = {
+      val urlPathParts = PathPart.splitAbsPath(url)
+      new ParameterlessSubRoute(urlPathParts, urlPathParts, params.toList)
+    }
 
     /**
      * Append a part to the end of the current prefix, separated by a slash.

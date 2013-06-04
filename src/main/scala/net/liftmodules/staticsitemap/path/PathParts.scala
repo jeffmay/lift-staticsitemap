@@ -16,6 +16,7 @@ case class PathParts(parts: NormalPathPart*) {
       case NormalLocPath(pathItem) => NormalPathPart(pathItem)
     }
   }): _*)
+  def / (that: PathParts): PathParts = PathParts(this.parts ++ that.parts: _*)
 
   def asFullPath: String = mkFullPath(parts map {_.slug})
 }

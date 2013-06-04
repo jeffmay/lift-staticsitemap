@@ -32,7 +32,7 @@ trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLogga
 
   def matchHead_? : Boolean
 
-  def templatePath: String
+  def templatePath: PathParts
 
   def defaultValue: Box[ParamsType] = Empty
 
@@ -232,7 +232,7 @@ trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLogga
    */
   override val rewritePF: Box[LiftRules.RewritePF] =
     Full(
-      NamedPF(templatePath) {
+      NamedPF(templatePath.asFullPath) {
         new PartialFunction[RewriteRequest, RewriteResponse] {
 
           def isDefinedAt(req: RewriteRequest) = {
@@ -255,7 +255,7 @@ trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLogga
               case _ =>
             }
             // stop rewriting as we have resolved to a template
-            RewriteResponse(splitPath(templatePath), stopRewriting = true)
+            RewriteResponse(templatePath.parts.toList map {_.slug}, stopRewriting = true)
           }
         }
       }

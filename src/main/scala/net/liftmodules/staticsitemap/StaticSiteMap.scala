@@ -13,6 +13,40 @@ abstract class StaticSiteMap(val parent: Option[RoutesBuilder] = None)
   }
 
   /**
+   * Attempt to cast the container to a specific static container of routes in an Option.
+   *
+   * @tparam T The type of RoutesContainer to convert to.
+   * @return An option of type T
+   */
+  def getAs[T](implicit mf: Manifest[T]): Option[T] = try {
+    Some(mf.erasure.cast(this).asInstanceOf[T])
+  }
+  catch {
+    case _: ClassCastException => None
+  }
+
+  /**
+   * Attempt to cast the container to a specific static container of routes or else convert to some
+   * subtype of T.
+   *
+   * @tparam T The type of RoutesContainer to convert to.
+   * @return A RoutesContainer of type T
+   */
+  def getAsOrElse[T : Manifest](otherwise: => T): T = this.getAs[T].getOrElse(otherwise)
+
+  /**
+   * Attempt to cast the container to a specific static container of routes.
+   *
+   * This is useful for doing:
+   * sitemap.getAsOrThrow[SpecialRoutes].Special.url
+   *
+   * @tparam T The type of RoutesContainer to convert to.
+   * @return A RoutesContainer of type T
+   * @throws MissingRoutesException When it can't be cast
+   */
+  def getAsOrThrow[T : Manifest]: T = this.getAsOrElse[T](throw new MissingRoutesException[this.type, T])
+
+  /**
    * Initialize the StaticSiteMap. Nothing needs to happen here.
    */
   def init() {}
