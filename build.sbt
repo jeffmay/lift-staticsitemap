@@ -38,3 +38,8 @@ libraryDependencies <++= liftVersion {
     "org.scalatest" %% "scalatest" % "1.9.1" % "test" withSources()
   )
 }
+
+// Resources
+////////////
+
+unmanagedResourceDirectories in Test <+= baseDirectory { _ / "src/test/webapp" }

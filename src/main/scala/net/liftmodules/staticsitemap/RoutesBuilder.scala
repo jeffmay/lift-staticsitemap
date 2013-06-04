@@ -16,7 +16,7 @@ abstract class RoutesBuilder(
    * Convert a String slug into a PathParts prepending the container's name prefix,
    * so that you can leave off the {{{^**}}}.
    */
-  implicit def strToListPathParts(part: String): PathParts =
+  implicit def strToPathParts(part: String): PathParts =
     PathParts((prefixNameParts.parts :+ NormalPathPart(part)): _*)
 
   /**
