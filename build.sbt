@@ -7,13 +7,13 @@ organization := "net.liftmodules"
 
 version := "0.8-SNAPSHOT"
 
-liftVersion <<= liftVersion ?? "2.5-SNAPSHOT"
+liftVersion <<= liftVersion ?? "2.6-SNAPSHOT"
 
 liftEdition <<= liftVersion apply { _.substring(0,3) }
 
 name <<= (name, liftEdition) { (n, e) =>  n + "_" + e }
 
-scalaVersion := "2.10.0"
+scalaVersion := "2.10.3"
 
 crossScalaVersions := Seq("2.10.0", "2.9.2", "2.9.1-1", "2.9.1")
 
@@ -29,11 +29,14 @@ resolvers += "Java.net Maven2 Repository" at "http://download.java.net/maven/2/"
 // Dependencies
 ///////////////
 
-libraryDependencies <++= liftVersion {
-  v => Seq(
-    "net.liftweb" %% "lift-webkit" % v % "compile->default" withSources(),
-    "net.liftweb" %% "lift-testkit" % v % "compile" withSources(),
+libraryDependencies <++= (liftVersion, scalaVersion) {
+  (liftV, scalaV) => Seq(
+    "net.liftweb" %% "lift-webkit" % liftV % "compile->default" withSources(),
     "javax.servlet" % "servlet-api" % "2.5" % "provided" withSources(),
+    scalaV match {
+      case "2.9.2" | "2.9.1" | "2.9.1-1" => "org.specs2" %% "specs2" % "1.12.3" % "test" withSources()
+      case _ => "org.specs2" %% "specs2" % "1.13" % "test" withSources()
+    },
     "org.specs2" %% "specs2" % "1.13" % "test" withSources(),
     "org.scalatest" %% "scalatest" % "1.9.1" % "test" withSources()
   )
