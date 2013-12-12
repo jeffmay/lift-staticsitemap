@@ -53,14 +53,14 @@ case class ParamsRoute[ParamsType](
   route =>
 
   lazy val linkable =
-    new ParamsLinkableLoc[ParamsType](
+    new ParamsPFLoc[ParamsType](
       name,
       templatePath,
       paramForUrl,
       urlForParam,
       linkText,
       params
-    ) with PostExtractionHooks[ParamsType] {
+    ) {
 
       override def postExtraction(param: Box[ParamsType]) {
         postExtractionHooks foreach {
@@ -103,8 +103,8 @@ case class ParamsRoute[ParamsType](
   override def toString =
     "%s[%s[%s]](name=\"%s\", template=\"%s\", params=%s".format(
       getClass.getSimpleName,
-      mf.erasure.getSimpleName,
-      mf.erasure.getTypeParameters.map{_.getName}.mkString(","),
+      mf.runtimeClass.getSimpleName,
+      mf.runtimeClass.getTypeParameters.map{_.getName}.mkString(","),
       name,
       templatePath,
       params
@@ -112,3 +112,21 @@ case class ParamsRoute[ParamsType](
       if (postExtractionHooks.isEmpty) ")" else ", hooks=%s)".format(postExtractionHooks)
     }
 }
+
+/**
+ * Exception thrown when a URL cannot be constructed with the parameter passed to the url() method of a Loc.
+ * @param routeName The unique name of the Route / Loc
+ * @param param The expected parameter
+ */
+class UrlGenerationException(
+  routeName: String,
+  param: Any
+) extends Exception(
+"""The Route %s cannot generate a link for the parameter %s.
+  |Please either:
+  |1. Update this route's paramForUrl partial function to be defined
+  |for parameters with this value.
+  |2. Update the call to url() on the Route's Loc that threw this exception
+  |to pass a valid parameter.
+""".stripMargin.format(routeName, param.toString)
+)

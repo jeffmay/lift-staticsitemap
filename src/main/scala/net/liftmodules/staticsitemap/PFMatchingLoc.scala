@@ -4,7 +4,6 @@ import net.liftweb.common._
 import net.liftweb.util.NamedPF
 import net.liftweb.http._
 import net.liftweb.sitemap.Loc
-import path.PathUtils._
 import net.liftweb.sitemap.Loc.{EarlyResponse, Link}
 import net.liftweb.http.RewriteRequest
 import net.liftweb.http.ParsePath
@@ -13,28 +12,59 @@ import net.liftweb.util.Helpers._
 import net.liftmodules.staticsitemap.path.PathParts
 
 /**
- * Holds the first Partial Loc's name that matched the current request before any rewrites.
+ * Uses a partial function's isDefinedAt method to determine if this Loc matches.
+ *
+ * The matching logic happens in two phases.
+ *
+ * 1. The matching phases:
+ *
+ * In this phase, Lift is searching through all known Locs for the one who's doesMatch_?
+ * method returns true. Once there is one who does match, the search stops and the request's
+ * loc value is set.
+ *
+ * At this point, the logic differs from a normal Loc in that it will store the name of the loc
+ * that matched in a RequestVar and then automatically issue a rewrite to the template path
+ * with the matched value -- rather than the same URL with the matched value.
+ *
+ * 2. Post-rewrite matching phase:
+ *
+ * In this phase we cannot trust our partial function to match anymore, since the template
+ * path may differ from the URL path. So in this phase we check whether the URL matches
+ * by checking whether our name is the same as the name of the matched loc in the RequestVar.
+ *
+ * This second phase may still match another non-PFMatchingLoc but it will never match a
+ * different PFMatchingLoc. Depending on how you are using it, this may be a feature or a bug,
+ * so be careful with mixing PFMatchingLocs and normal Locs.
+ *
+ * @tparam ParamsType The type of the parameter for this route.
  */
-object matchedLocName extends RequestVar[Box[String]](Empty)
-
-/**
- * Hack around Lift's ugly parameter extraction code.
- * Instead of matching the route with some weird recursive string matching method
- * it uses a partial function to determine if a route matches the current URL.
- * @tparam ParamsType The type of the parameter for this route
- */
-trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLoggable {
+trait PFMatchingLoc[ParamsType] extends Loc[ParamsType] with LazyLoggable {
   loc =>
 
   def parameterForUrl: PartialFunction[List[String], Box[ParamsType]]
 
   def urlForParameter: PartialFunction[ParamsType, List[String]]
 
-  def matchHead_? : Boolean
-
   def templatePath: PathParts
 
   def defaultValue: Box[ParamsType] = Empty
+
+
+  /*
+   * Hooks into the partial function matching logic
+   */
+
+  /**
+   * Called after the loc first matches the request.
+   */
+  def onMatch() {}
+
+  /**
+   * Calls your post extraction hook after the value is extracted
+   * from the partial function, and before the
+   */
+  def postExtraction(param: Box[ParamsType]) {}
+
 
   /**
    * A request value that holds on to any redirect exception received while matching a request.
@@ -55,12 +85,9 @@ trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLogga
    *         false if the parameter partial function is not defined or any other type of exception is thrown.
    */
   def canHandle(parts: List[String]): Boolean = {
-    try {
-      parameterForUrl.isDefinedAt(parts)
-    }
+    try parameterForUrl isDefinedAt parts
     catch {
-      case captured: ResponseShortcutException =>
-        true
+      case captured: ResponseShortcutException => true
       case _: Exception => false
     }
   }
@@ -74,21 +101,27 @@ trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLogga
    */
   def canHandle(parsePath: ParsePath): Boolean = {
     extractParts(parsePath) match {
-      case Some(parts) => canHandle(parts)
+      case Some(parts) => this canHandle parts
       case None => false
     }
   }
 
   /**
    * Safely try to parse the value.
+   *
+   * This will properly handle any redirects thrown by the parameterForUrl
+   * method and wrap them in a failure.
+   *
+   * Since we are still in the process of matching a Loc, we cannot let the
+   * exception bubble up until we are safely within the session phase of the
+   * request lifecycle.
+   *
    * @param parts path parts of a url.
    * @return A box containing the parameter for the parse path.
    */
   def safeExtractValue(parts: List[String]): Box[ParamsType] = {
-    if (canHandle(parts))
-      try {
-        parameterForUrl(parts)
-      }
+    if (this canHandle parts)
+      try parameterForUrl apply parts
       catch {
         case captured: ResponseShortcutException =>
           Failure("ResponseShortcutException", Full(captured), Empty)
@@ -160,7 +193,7 @@ trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLogga
    * (even if the rewritten request path no longer matches)
    */
   abstract override def doesMatch_?(req: Req): Boolean = {
-    matchedLocName.get match {
+    val isMatch: Boolean = matchedLocName.get match {
       case Full(thatName) =>
         this.name == thatName
       case fail: Failure => false
@@ -178,6 +211,10 @@ trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLogga
         }
         else false
     }
+    if (isMatch) {
+      this.onMatch()
+    }
+    isMatch
   }
 
   /**
@@ -188,8 +225,10 @@ trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLogga
    * This not only checks that the parameterForUrl function is defined at the URL path,
    * but also that the urlForParameter is defined at the parameter extracted from the URL.
    * This is to ensure that you can't see a URL that you can't construct from this link.
+   *
+   * @note matchHead_? is false, because we assume that the partial function should match the whole URL.
    */
-  val link = new Link[ParamsType](List(name), matchHead_?) {
+  val link = new Link[ParamsType](List(name), false) {
 
     /**
      * Check if the request matches this link.
@@ -200,7 +239,7 @@ trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLogga
      *         or any other type of exception is thrown.
      */
     override def isDefinedAt(req: Req): Boolean = {
-      loc.canHandle(req.path)
+      loc canHandle req.path
     }
 
     /**
@@ -250,14 +289,16 @@ trait PartialFunctionMatching[ParamsType] extends Loc[ParamsType] with LazyLogga
                 capturedEarlyResponse set Full(resp)
             }
             // call any post extraction hooks
-            loc match {
-              case has: PostExtractionHooks[ParamsType] => has.postExtraction(requestValue.get)
-              case _ =>
-            }
+            loc.postExtraction(requestValue.get)
             // stop rewriting as we have resolved to a template
-            RewriteResponse(templatePath.parts.toList map {_.slug}, stopRewriting = true)
+            RewriteResponse(templatePath.parts.toList.map(_.slug), stopRewriting = true)
           }
         }
       }
     )
 }
+
+/**
+ * Holds the first Partial Loc's name that matched the current request before any rewrites.
+ */
+object matchedLocName extends RequestVar[Box[String]](Empty)

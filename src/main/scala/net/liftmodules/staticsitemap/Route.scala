@@ -6,9 +6,10 @@ import net.liftweb.sitemap.Loc._
 import net.liftmodules.staticsitemap.path.PathParts
 
 /**
- * The base trait of Routes and ParameterlessRoutes
+ * The base trait of the Route and ParameterlessRoute classes.
  *
- * @tparam ParamsType
+ * @tparam ParamsType The type of params to extract from the URL.
+ *                    And often is required to build the URL.
  */
 trait Route[ParamsType] extends ConvertableToMenu {
 
@@ -29,45 +30,11 @@ trait Route[ParamsType] extends ConvertableToMenu {
 
 object Route {
 
-  /**
-   *
-   * @param path
-   * @return
-   */
-  def locPathFor(path: PathParts): List[LocPath] = (path match {
+  // TODO: Put this somewhere better.
+  private[staticsitemap] def locPathFor(path: PathParts): List[LocPath] = (path match {
     case PathParts() => List("index")
-    case path: PathParts => path.parts.toList map {_.slug}
-  }) map {NormalLocPath(_)}
-
-  /**
-   * Helper method to find a route, with a parameter, with the given name.
-   * @note This will only search entries in the sitemap that are instances of the LinkableLoc class
-   *       (I.E. Routes constructed with the Route() apply methods that construct routes with parameters)
-   *
-   * @param name The name of the route to find
-   */
-  @deprecated("Use StaticSiteMap", "161")
-  def find(name: String): LinkableLoc[Any] = {
-    SiteMap.findLoc(name) match {
-      case Full(loc: LinkableLoc[Any]) => loc
-      case _ => throw new UndefinedRouteException(name, true)
-    }
-  }
-
-  /**
-   * Helper method to find a route, without a parameter, with the given name.
-   * @note This will only search entries in the sitemap that are instances of the ParameterlessLinkableLoc class
-   *       (I.E. Routes constructed with the Route() apply methods that construct routes without parameters)
-   *
-   * @param name The name of the route to find
-   */
-  @deprecated("Use StaticSiteMap", "161")
-  def findParameterless(name: String): ParameterlessLinkableLoc = {
-    SiteMap.findLoc(name) match {
-      case Full(loc: ParameterlessLinkableLoc) => loc
-      case _ => throw new UndefinedRouteException(name, false)
-    }
-  }
+    case path: PathParts => path.parts.toList.map(_.slug)
+  }) map NormalLocPath
 
   /**
    * Helper method to construct a Route with a parameter.

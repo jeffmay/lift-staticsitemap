@@ -1,11 +1,10 @@
 package net.liftmodules.staticsitemap
 
-import net.liftweb.sitemap.{Menu, NormalLocPath, Loc}
+import net.liftweb.sitemap.{Menu, Loc}
 import net.liftweb.sitemap.Loc.LocParam
 import net.liftweb.util.NamedPartialFunction
 import net.liftweb.common.Box
 import net.liftweb.sitemap.Menu.Menuable
-import net.liftmodules.staticsitemap.path.PathUtils._
 import net.liftmodules.staticsitemap.path.PathParts
 
 /**
@@ -23,20 +22,19 @@ case class ParameterlessRoute(
   templatePath: PathParts,
   override val linkText: Loc.LinkText[Unit],
   override val params: List[LocParam[Unit]],
-  postExtractionHooks: Seq[NamedPartialFunction[Box[Unit], Unit]] = Nil)
-  extends Menuable(
-    name,
-    linkText,
-    Route.locPathFor(templatePath),
-    false,
-    params,
-    Nil)
-  with Route[Unit] {
+  postExtractionHooks: Seq[NamedPartialFunction[Box[Unit], Unit]] = Nil
+) extends Menuable(
+  name,
+  linkText,
+  Route.locPathFor(templatePath),
+  false,
+  params,
+  Nil
+) with Route[Unit] {
   route =>
 
   lazy val linkable =
-    new ParameterlessLinkableLoc(name, templatePath, url, linkText, params)
-      with PostExtractionHooks[Unit] {
+    new StaticUrlPFLoc(name, templatePath, url, linkText, params) {
 
       override def postExtraction(param: Box[Unit]) {
         postExtractionHooks foreach {

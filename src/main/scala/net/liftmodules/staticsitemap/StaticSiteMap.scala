@@ -19,7 +19,7 @@ abstract class StaticSiteMap(val parent: Option[RoutesBuilder] = None)
    * @return An option of type T
    */
   def getAs[T](implicit mf: Manifest[T]): Option[T] = try {
-    Some(mf.erasure.cast(this).asInstanceOf[T])
+    Some(mf.runtimeClass.cast(this).asInstanceOf[T])
   }
   catch {
     case _: ClassCastException => None
@@ -82,3 +82,11 @@ abstract class StaticSiteMap(val parent: Option[RoutesBuilder] = None)
     case UnderUnapply(menu) => List(menu.rebuild(_ ::: menus))
   } (SiteMap.addMenusAtEndMutator(menus))
 }
+
+
+class MissingRoutesException[Sitemap, Expected](implicit sitemap: Manifest[Sitemap], expected: Manifest[Expected])
+  extends Exception(
+    "Could not cast the SiteMap type %s as %s".format(
+      sitemap.runtimeClass.getSimpleName, expected.runtimeClass.getSimpleName
+    )
+  )

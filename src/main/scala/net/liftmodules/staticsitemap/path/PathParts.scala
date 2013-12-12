@@ -4,22 +4,23 @@ import net.liftweb.sitemap.{NormalLocPath, LocPath, *}
 import net.liftmodules.staticsitemap.path.PathUtils._
 
 case class PathParts(parts: NormalPathPart*) {
-  def / (part: String): PathParts = PathParts((parts :+ NormalPathPart(part)): _*)
+  def / (part: String): PathParts = PathParts(parts :+ NormalPathPart(part): _*)
   def / (partOpt: Option[String]): PathParts = (partOpt: PathPart) match {
     case EmptyPathPart => this
-    case part: NormalPathPart => PathParts((parts :+ part): _*)
+    case part: NormalPathPart => PathParts(parts :+ part: _*)
   }
-  def / (part: NormalPathPart): PathParts = PathParts((parts :+ part): _*)
-  def / (part: LocPath): PathParts = PathParts((parts :+ {
+  def / (part: NormalPathPart): PathParts = PathParts(parts :+ part: _*)
+  def / (part: LocPath): PathParts = PathParts(parts :+ {
     part match {
       case * => NormalPathPart("*")
       case NormalLocPath(pathItem) => NormalPathPart(pathItem)
     }
-  }): _*)
+  }: _*)
   def / (that: PathParts): PathParts = PathParts(this.parts ++ that.parts: _*)
 
-  def asFullPath: String = mkFullPath(parts map {_.slug})
+  def asFullPath: String = mkFullPath(parts.map(_.slug))
 }
+
 object PathParts {
 
   /**
@@ -33,15 +34,13 @@ object PathParts {
       throw new PathPartSplitException("Path is not absolute (does not start with '/'): \"%s\"".format(absolutePath))
     val parts = absolutePath.split('/')
     if (parts.isEmpty) PathParts()
-    else PathParts(parts.tail.map {
-      NormalPathPart(_)
-    }: _*)
+    else PathParts(parts.tail map NormalPathPart: _*)
   }
 
   // Convert from PathParts
   implicit def pathPartsToListPathPart(path: PathParts): List[NormalPathPart] = path.parts.toList
 
-  implicit def pathPartsToSeqString(path: PathParts): Seq[String] = path.parts.map{ _.slug }
+  implicit def pathPartsToSeqString(path: PathParts): Seq[String] = path.parts.map(_.slug)
 
-  implicit def pathPartsToListString(path: PathParts): List[String] = path.parts.map{ _.slug }.toList
+  implicit def pathPartsToListString(path: PathParts): List[String] = path.parts.map(_.slug).toList
 }

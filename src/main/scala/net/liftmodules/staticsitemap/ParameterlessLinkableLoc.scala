@@ -18,13 +18,8 @@ class ParameterlessLinkableLoc(
   val templatePath: PathParts,
   val url: String,
   override val text: Loc.LinkText[Unit],
-  override val params: List[LocParam[Unit]])
-  extends LinkableLoc[Unit] with PartialFunctionMatching[Unit] {
-
-  @deprecated("Use StaticSiteMap routes", "161")
-  def url(params: Unit) = url
-
-  val matchHead_? = false
+  override val params: List[LocParam[Unit]]
+) extends PFMatchingLoc[Unit] {
 
   override val defaultValue = Full(())
 

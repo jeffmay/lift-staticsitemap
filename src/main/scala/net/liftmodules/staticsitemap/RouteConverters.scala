@@ -2,7 +2,7 @@ package net.liftmodules.staticsitemap
 
 import net.liftweb.common.{Full, Box}
 import net.liftweb.sitemap.{*, Loc}
-import net.liftmodules.staticsitemap.path.{PathParts, NormalPathPart, PathPart}
+import net.liftmodules.staticsitemap.path.{PathParts, PathPart}
 import path.PathUtils._
 import net.liftweb.util.NamedPartialFunction
 
@@ -51,7 +51,7 @@ trait ConvertibleToRoute0 extends ConvertibleToRoute[Unit] {
   def templateParts: PathParts = PathParts.fromAbsPath(url)
 
   def paramForUrl = {
-    case parts if (parts == urlPathParts) => Full(())
+    case parts if parts == urlPathParts => Full(())
   }
 
   def urlForParam = {
@@ -65,14 +65,14 @@ trait ConvertibleToRoute1[T1] extends ConvertibleToRoute[T1] {
 
   def url(p1: T1): String
 
-  private def calcUrl = url(_)
+  private def calcUrl = url _
 
   /**
    * Optimistically calculate the url from the parameters.
    * No restriction on value or subtype.
    */
   def urlForParam = {
-    case param: T1 => calcUrl.andThen(splitPath(_))(param)
+    case param: T1 => calcUrl.andThen(splitPath)(param)
   }
 
   lazy val toRoute = ParamsRoute[T1](
@@ -96,7 +96,7 @@ trait ConvertibleToRoute2[T1, T2] extends ConvertibleToRoute[(T1, T2)] {
    * No restriction on value or subtype.
    */
   def urlForParam = {
-    case params: (T1, T2) => calcUrl.andThen(splitPath(_))(params)
+    case params: (T1, T2) => calcUrl.andThen(splitPath)(params)
   }
 
   lazy val toRoute = ParamsRoute[(T1, T2)](
@@ -120,7 +120,7 @@ trait ConvertibleToRoute3[T1, T2, T3] extends ConvertibleToRoute[(T1, T2, T3)] {
    * No restriction on value or subtype.
    */
   def urlForParam = {
-    case params: (T1, T2, T3) => calcUrl.andThen(splitPath(_))(params)
+    case params: (T1, T2, T3) => calcUrl.andThen(splitPath)(params)
   }
 
   lazy val toRoute = ParamsRoute[(T1, T2, T3)](
