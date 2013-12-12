@@ -3,8 +3,6 @@ package net.liftmodules.staticsitemap.path
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 import PathUtils._
-import net.liftweb.http.ParsePath
-import net.liftweb.mockweb.MockWeb
 
 class TestPathUtils extends FunSpec with ShouldMatchers {
 

@@ -7,7 +7,7 @@ organization := "net.liftmodules"
 
 version := "0.8-SNAPSHOT"
 
-liftVersion <<= liftVersion ?? "2.6-SNAPSHOT"
+liftVersion <<= liftVersion ?? "2.6-M2"
 
 liftEdition <<= liftVersion apply { _.substring(0,3) }
 
@@ -32,6 +32,7 @@ resolvers += "Java.net Maven2 Repository" at "http://download.java.net/maven/2/"
 libraryDependencies <++= (liftVersion, scalaVersion) {
   (liftV, scalaV) => Seq(
     "net.liftweb" %% "lift-webkit" % liftV % "compile->default" withSources(),
+    "net.liftweb" %% "lift-testkit" % liftV % "compile->default" withSources(),
     "javax.servlet" % "servlet-api" % "2.5" % "provided" withSources(),
     scalaV match {
       case "2.9.2" | "2.9.1" | "2.9.1-1" => "org.specs2" %% "specs2" % "1.12.3" % "test" withSources()

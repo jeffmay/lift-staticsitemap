@@ -2,11 +2,8 @@ package net.liftmodules.staticsitemap
 
 import net.liftweb.mockweb.WebSpec
 import net.liftweb.http._
-import net.liftweb.common.{Empty, Box, Full}
-import scala.xml.{Elem, NodeSeq}
-import net.liftweb.http.ParsePath
-import net.liftweb.mocks.MockHttpServletResponse
-import org.specs2.execute.Result
+import net.liftweb.common.Box
+import scala.xml.NodeSeq
 
 object SampleSiteMap extends StaticSiteMap {
 
@@ -20,26 +17,21 @@ class RootIndexTest extends WebSpec(
   }
 ) {
 
-//  /**
-//   * Cribbed from LiftSession and removed the request object.
-//   * @param path a request parse path
-//   * @return
-//   */
-//  def findVisibleTemplate(path: ParsePath): Box[NodeSeq] = {
-//    val tpath = path.partPath
-//    val splits = tpath.toList.filter {
-//      a => !a.startsWith("_") && !a.startsWith(".") && a.toLowerCase.indexOf("-hidden") == -1
-//    } match {
-//      case Nil => List("index")
-//      case s => s
-//    }
-//    Templates(splits, S.locale)
-//  }
-
-//  def testResponse(req: Req)(test: MockHttpServletResponse => Result) = {
-//
-//    new MockHttpServletResponse()
-//  }
+  /**
+   * Cribbed from LiftSession and removed the request object.
+   * @param path a request parse path
+   * @return
+   */
+  def findVisibleTemplate(path: ParsePath): Box[NodeSeq] = {
+    val tpath = path.partPath
+    val splits = tpath.toList.filter {
+      a => !a.startsWith("_") && !a.startsWith(".") && a.toLowerCase.indexOf("-hidden") == -1
+    } match {
+      case Nil => List("index")
+      case s => s
+    }
+    Templates(splits, S.locale)
+  }
 
   import SampleSiteMap._
 
@@ -48,33 +40,33 @@ class RootIndexTest extends WebSpec(
    */
 
   "The SiteMap" should {
-    "- not resolve a non existant url" withReqFor("/empty") in {
+    "not resolve a non existant url" withReqFor "/empty" in {
       _.location.isEmpty
     }
   }
 
   "Root Index" should {
 
-    "- be a root menu" in {
+    "be a root menu" in {
       Index.toRoute.toMenu.isRoot_?
     }
 
-    "- resolve the / url" withReqFor("/") in {
+    "resolve the / url" withReqFor "/" in {
       _.location.isDefined
     }
 
-    "- resolve to the static Index loc" withReqFor("/") in {
+    "resolve to the static Index loc" withReqFor "/" in {
       req => Index.toRoute.toMenu.findLoc(req).isDefined
     }
 
-    "- resolve to a template" withTemplateFor("/") in {
+    "resolve to a template" withTemplateFor "/" in {
       _ == Templates("index" :: Nil)
     }
   }
 
   "Standard snails" should {
 
-    "- resolve to a template" withTemplateFor("/const") in {
+    "resolve to a template" withTemplateFor "/const" in {
       _ == Templates("const" :: Nil)
     }
   }
